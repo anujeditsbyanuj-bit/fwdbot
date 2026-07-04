@@ -1,0 +1,146 @@
+
+{% extends "base.html" %}
+
+{% block title %}Notification Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>📩 Notification Details</h1>
+        <a href="{{ url_for('notifications') }}" class="btn btn-secondary">⫷ Back to Notifications</a>
+    </div>
+
+    <div class="notification-detail-card">
+        <div class="detail-header">
+            <span class="log-type {{ notification.get('log_type', 'info') }}">
+                {{ notification.get('log_type', 'info').upper() }}
+            </span>
+            <span class="detail-time">
+                {{ notification.timestamp.strftime('%d-%m-%Y %I:%M:%S %p') }}
+            </span>
+        </div>
+
+        <div class="detail-content">
+            <h3>Message</h3>
+            <p class="detail-message">{{ notification.message }}</p>
+
+            {% if notification.get('type') == 'subscription_expired' %}
+            <div class="detail-info">
+                <h3>Subscription Details</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>User:</strong> {{ notification.get('user_name', 'Unknown') }}
+                    </div>
+                    <div class="info-item">
+                        <strong>User ID:</strong> <code>{{ notification.get('user_id', 'N/A') }}</code>
+                    </div>
+                    <div class="info-item">
+                        <strong>Old Plan:</strong> {{ notification.get('old_plan', 'N/A').upper() }}
+                    </div>
+                    <div class="info-item">
+                        <strong>New Plan:</strong> {{ notification.get('new_plan', 'free').upper() }}
+                    </div>
+                    <div class="info-item">
+                        <strong>Expired Date:</strong> {{ notification.get('expired_date', 'N/A') }}
+                    </div>
+                    <div class="info-item">
+                        <strong>Expired Time:</strong> {{ notification.get('expired_time', 'N/A') }}
+                    </div>
+                </div>
+                
+                {% if notification.get('user_id') %}
+                <div class="detail-actions">
+                    <a href="{{ url_for('user_detail', user_id=notification.get('user_id')) }}" class="btn btn-primary">
+                        👤 View User Profile
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="detail-meta">
+                <strong>Admin/System:</strong> {{ notification.get('admin', 'System') }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.notification-detail-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+.detail-time {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.detail-content h3 {
+    color: #333;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.detail-message {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #007bff;
+    margin-bottom: 20px;
+}
+
+.detail-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.info-item {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.info-item strong {
+    color: #555;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.detail-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.detail-meta {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+    color: #666;
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}

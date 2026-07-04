@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}User Bots - Admin Panel{% endblock %}
+{% block page_title %}User Bots{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-robot"></i> All User Bots</h2>
+    </div>
+    <div class="card-body">
+        {% if bots %}
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Bot ID</th>
+                        <th>Owner</th>
+                        <th class="hide-mobile">Token (truncated)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bot in bots %}
+                    <tr>
+                        <td><code>{{ bot.get('bot_id', 'N/A') }}</code></td>
+                        <td>
+                            <a href="{{ url_for('user_detail', user_id=bot.get('user_id')) }}">
+                                <code>{{ bot.get('user_id') }}</code>
+                            </a>
+                        </td>
+                        <td class="hide-mobile"><code class="small-code">{{ bot.get('token', '')[:25] + '...' if bot.get('token') else 'N/A' }}</code></td>
+                        <td>
+                            <a href="{{ url_for('user_detail', user_id=bot.get('user_id')) }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-user"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="{{ url_for('bots', page=page-1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="page-info">{{ page }} / {{ total_pages }}</span>
+            
+            {% if page < total_pages %}
+            <a href="{{ url_for('bots', page=page+1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-robot"></i>
+            <p>No user bots registered yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

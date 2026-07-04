@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}User {{ user['id'] }} - Admin Panel{% endblock %}
+{% block page_title %}User Details{% endblock %}
+
+{% block content %}
+<div class="user-detail">
+    <div class="back-link">
+        <a href="{{ url_for('users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="detail-grid">
+        <div class="card user-info">
+            <div class="card-header">
+                <h2><i class="fas fa-user"></i> User Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>User ID</label>
+                        <span><code>{{ user['id'] }}</code></span>
+                    </div>
+                    <div class="info-item">
+                        <label>FTM ID</label>
+                        <span><code>{{ user.get('ftm_id', 'N/A') }}</code></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Name</label>
+                        <span>{{ user.get('name', 'Unknown') }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Joined</label>
+                        <span>{{ user.get('joined_at').strftime('%Y-%m-%d %H:%M') if user.get('joined_at') else 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Status</label>
+                        <span>
+                            {% if user.get('ban_status', {}).get('is_banned') %}
+                                <span class="status-badge banned">Banned</span>
+                            {% else %}
+                                <span class="status-badge active">Active</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <label>Ban Reason</label>
+                        <span>{{ user.get('ban_status', {}).get('ban_reason') or 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card subscription-info">
+            <div class="card-header">
+                <h2><i class="fas fa-crown"></i> Subscription</h2>
+            </div>
+            <div class="card-body">
+                <div class="current-plan">
+                    <span class="plan-badge large {{ user.get('subscription', {}).get('plan', 'free') }}">
+                        {{ user.get('subscription', {}).get('plan', 'free')|upper }}
+                    </span>
+                    <span class="plan-status {{ user.get('subscription', {}).get('status', 'active') }}">
+                        {{ user.get('subscription', {}).get('status', 'active')|capitalize }}
+                    </span>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Duration</label>
+                        <span>{{ user.get('subscription', {}).get('duration_info') or 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Expires At</label>
+                        <span>{{ user.get('subscription', {}).get('expires_at').strftime('%Y-%m-%d %H:%M') if user.get('subscription', {}).get('expires_at') else 'Never' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Assigned By</label>
+                        <span>{{ user.get('subscription', {}).get('assigned_by', 'system') }}</span>
+                    </div>
+                </div>
+
+                <div class="plan-actions">
+                    <div class="form-grid compact">
+                        <div class="form-group">
+                            <label>Plan</label>
+                            <select id="planSelect" class="form-input">
+                                <option value="free" {% if user.get('subscription', {}).get('plan', 'free') == 'free' %}selected{% endif %}>Free</option>
+                                <option value="plus" {% if user.get('subscription', {}).get('plan') == 'plus' %}selected{% endif %}>Plus</option>
+                                <option value="pro" {% if user.get('subscription', {}).get('plan') == 'pro' %}selected{% endif %}>Pro</option>
+                                <option value="infinity" {% if user.get('subscription', {}).get('plan') == 'infinity' %}selected{% endif %}>Infinity</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Value</label>
+                            <input type="number" id="durationValue" class="form-input" placeholder="30" value="30" min="1" max="999">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <select id="durationUnit" class="form-input">
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Hours</option>
+                                <option value="days" selected>Days</option>
+                                <option value="weeks">Weeks</option>
+                                <option value="months">Months</option>
+                                <option value="years">Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="updatePlan({{ user['id'] }})">
+                            <i class="fas fa-save"></i> Update
+                        </button>
+                        <button class="btn btn-warning" onclick="setLifetime({{ user['id'] }})">
+                            <i class="fas fa-infinity"></i> Lifetime
+                        </button>
+                        <button class="btn btn-danger" onclick="revokePlan({{ user['id'] }})">
+                            <i class="fas fa-times"></i> Revoke
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card referral-info">
+            <div class="card-header">
+                <h2><i class="fas fa-share-alt"></i> Referral Info</h2>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Referral Code</label>
+                        <span><code class="small-code">{{ user.get('referral', {}).get('code', 'N/A') }}</code></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Total Referrals</label>
+                        <span>{{ user.get('referral', {}).get('total_referrals', 0) }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>FTM Bucks</label>
+                        <span class="ftm-bucks">{{ user.get('referral', {}).get('ftm_bucks', 0) }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Referred By</label>
+                        <span>{{ user.get('referral', {}).get('referred_by') or 'N/A' }}</span>
+                    </div>
+                </div>
+                <div class="ftm-bucks-actions">
+                    <input type="number" id="ftmBucksAmount" class="form-input" placeholder="Amount" value="0" min="0">
+                    <select id="ftmBucksAction" class="form-input">
+                        <option value="add">Add</option>
+                        <option value="deduct">Deduct</option>
+                        <option value="set">Set</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="updateFtmBucks({{ user['id'] }})">
+                        <i class="fas fa-coins"></i> Update
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card user-actions">
+            <div class="card-header">
+                <h2><i class="fas fa-envelope"></i> Send Message</h2>
+            </div>
+            <div class="card-body">
+                <div class="admin-chat">
+                    <textarea id="adminMessage" class="form-input" rows="4" placeholder="Type your message to the user..."></textarea>
+                    <button class="btn btn-primary btn-full" onclick="sendAdminMessage({{ user['id'] }})">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card user-actions">
+            <div class="card-header">
+                <h2><i class="fas fa-cogs"></i> Actions</h2>
+            </div>
+            <div class="card-body">
+                <div class="action-buttons vertical">
+                    <a href="{{ url_for('chats', user_id=user['id']) }}" class="btn btn-primary btn-full">
+                        <i class="fas fa-comments"></i> ᴏᴘᴇɴ ᴄʜᴀᴛ
+                    </a>
+                    {% if user.get('ban_status', {}).get('is_banned') %}
+                    <button class="btn btn-success btn-full" onclick="toggleBan({{ user['id'] }})">
+                        <i class="fas fa-user-check"></i> Unban User
+                    </button>
+                    {% else %}
+                    <button class="btn btn-danger btn-full" onclick="toggleBan({{ user['id'] }})">
+                        <i class="fas fa-user-slash"></i> Ban User
+                    </button>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if channels %}
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-broadcast-tower"></i> User Channels ({{ channels|length }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Chat ID</th>
+                            <th>Title</th>
+                            <th class="hide-mobile">Username</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for channel in channels %}
+                        <tr>
+                            <td><code>{{ channel.get('chat_id') }}</code></td>
+                            <td>{{ channel.get('title', 'Unknown') }}</td>
+                            <td class="hide-mobile">{{ '@' + channel.get('username') if channel.get('username') else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if bot %}
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-robot"></i> User Bot</h2>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Bot Token</label>
+                    <span><code class="small-code">{{ bot.get('token', '')[:20] + '...' if bot.get('token') else 'N/A' }}</code></span>
+                </div>
+                <div class="info-item">
+                    <label>Bot ID</label>
+                    <span><code>{{ bot.get('bot_id', 'N/A') }}</code></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+async function updatePlan(userId) {
+    const plan = document.getElementById('planSelect').value;
+    const durationValue = parseInt(document.getElementById('durationValue').value) || 30;
+    const durationUnit = document.getElementById('durationUnit').value || 'days';
+
+    try {
+        const response = await fetch(`/api/user/${userId}/update-plan`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                plan: plan, 
+                duration_value: durationValue,
+                duration_unit: durationUnit,
+                lifetime: false
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to update plan', 'error');
+    }
+}
+
+async function setLifetime(userId) {
+    if (!confirm('Grant lifetime Infinity subscription to this user?')) return;
+    try {
+        const response = await fetch(`/api/user/${userId}/set-lifetime`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to set lifetime', 'error');
+    }
+}
+
+async function revokePlan(userId) {
+    if (!confirm('Revoke subscription and set to FREE plan?')) return;
+    try {
+        const response = await fetch(`/api/user/${userId}/revoke-plan`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to revoke plan', 'error');
+    }
+}
+
+async function toggleBan(userId) {
+    try {
+        const response = await fetch(`/api/user/${userId}/toggle-ban`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to toggle ban', 'error');
+    }
+}
+
+async function updateFtmBucks(userId) {
+    const amount = parseInt(document.getElementById('ftmBucksAmount').value) || 0;
+    const action = document.getElementById('ftmBucksAction').value;
+    try {
+        const response = await fetch(`/api/user/${userId}/update-ftm-bucks`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({amount: amount, action: action})
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to update FTM Bucks', 'error');
+    }
+}
+
+async function sendAdminMessage(userId) {
+    const message = document.getElementById('adminMessage').value.trim();
+    if (!message) {
+        showNotification('Please enter a message', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/send-message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user_id: userId, message: message})
+        });
+        const data = await response.json();
+        if (data.success) {
+            showNotification(data.message, 'success');
+            document.getElementById('adminMessage').value = '';
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to send message', 'error');
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('DELETE this user and ALL their data? This cannot be undone!')) return;
+    if (!confirm('Are you REALLY sure? This will delete user, bot, and channels!')) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/delete-user/${userId}`;
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

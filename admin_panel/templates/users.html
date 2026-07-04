@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Users - Admin Panel{% endblock %}
+{% block page_title %}Users Management{% endblock %}
+
+{% block content %}
+<div class="page-actions">
+    <form class="search-form" method="GET">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" placeholder="Search User ID or Name" value="{{ search }}" class="search-input">
+        </div>
+        <select name="filter" class="form-input filter-select">
+            <option value="">All Users</option>
+            <option value="subscribed" {% if filter_type == 'subscribed' %}selected{% endif %}>Subscribed</option>
+            <option value="lifetime" {% if filter_type == 'lifetime' %}selected{% endif %}>Lifetime</option>
+            <option value="expired" {% if filter_type == 'expired' %}selected{% endif %}>Expired</option>
+            <option value="banned" {% if filter_type == 'banned' %}selected{% endif %}>Banned</option>
+        </select>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i>
+            <span class="hide-mobile">Search</span>
+        </button>
+        {% if search or filter_type %}
+        <a href="{{ url_for('users') }}" class="btn btn-secondary">
+            <i class="fas fa-times"></i>
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-users"></i> All Users</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th class="hide-mobile">FTM ID</th>
+                        <th class="hide-mobile">Name</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th class="hide-mobile">FTM Bucks</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td><code>{{ user['id'] }}</code></td>
+                        <td class="hide-mobile"><code>{{ user.get('ftm_id', 'N/A') }}</code></td>
+                        <td class="hide-mobile">{{ user.get('name', 'Unknown') }}</td>
+                        <td>
+                            <span class="plan-badge {{ user.get('subscription', {}).get('plan', 'free') }}">
+                                {{ user.get('subscription', {}).get('plan', 'free')|capitalize }}
+                                {% if user.get('subscription', {}).get('status') == 'lifetime' %}
+                                <i class="fas fa-infinity"></i>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.get('ban_status', {}).get('is_banned') %}
+                                <span class="status-badge banned">Banned</span>
+                            {% elif user.get('subscription', {}).get('status') == 'expired' %}
+                                <span class="status-badge expired">Expired</span>
+                            {% else %}
+                                <span class="status-badge active">Active</span>
+                            {% endif %}
+                        </td>
+                        <td class="hide-mobile">
+                            <span class="ftm-bucks">{{ user.get('referral', {}).get('ftm_bucks', 0) }}</span>
+                        </td>
+                        <td class="actions">
+                            <a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-sm btn-secondary" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="{{ url_for('users', page=page-1, search=search, filter=filter_type) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="page-info">{{ page }} / {{ total_pages }}</span>
+            
+            {% if page < total_pages %}
+            <a href="{{ url_for('users', page=page+1, search=search, filter=filter_type) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

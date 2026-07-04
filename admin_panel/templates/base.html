@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        footer {
+            background: var(--background-root);
+            border-top: 1px solid var(--outline-default);
+            padding: 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        footer p {
+            margin: 5px 0;
+            color: var(--foreground-dimmest);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="layout">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-robot"></i>
+                    <span>FᴛᴍBᴏᴛᴢx Admin</span>
+                </div>
+                <button class="sidebar-close" onclick="toggleSidebar()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('users') }}" class="nav-item {% if request.endpoint in ['users', 'user_detail'] %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('subscriptions') }}" class="nav-item {% if request.endpoint == 'subscriptions' %}active{% endif %}">
+                    <i class="fas fa-crown"></i>
+                    <span>Subscriptions</span>
+                </a>
+                <a href="{{ url_for('bans') }}" class="nav-item {% if request.endpoint == 'bans' %}active{% endif %}">
+                    <i class="fas fa-ban"></i>
+                    <span>Bans</span>
+                </a>
+                <a href="{{ url_for('ftm_bucks') }}" class="nav-item {% if request.endpoint == 'ftm_bucks' %}active{% endif %}">
+                    <i class="fas fa-coins"></i>
+                    <span>FTM Bucks</span>
+                </a>
+                <a href="{{ url_for('referrals') }}" class="nav-item {% if request.endpoint == 'referrals' %}active{% endif %}">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Referrals</span>
+                </a>
+                <a href="{{ url_for('channels') }}" class="nav-item {% if request.endpoint == 'channels' %}active{% endif %}">
+                    <i class="fas fa-broadcast-tower"></i>
+                    <span>Channels</span>
+                </a>
+                <a href="{{ url_for('bots') }}" class="nav-item {% if request.endpoint == 'bots' %}active{% endif %}">
+                    <i class="fas fa-robot"></i>
+                    <span>User Bots</span>
+                </a>
+                <a href="{{ url_for('activity_logs') }}" class="nav-item {% if request.endpoint == 'activity_logs' %}active{% endif %}">
+                    <i class="fas fa-history"></i>
+                    <span>Activity Logs</span>
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="{{ url_for('chats') }}" class="nav-item {% if request.endpoint == 'chats' %}active{% endif %}">
+                    <i class="fas fa-comments"></i>
+                    <span>Chats</span>
+                </a>
+                <a href="{{ url_for('broadcast') }}" class="nav-item {% if request.endpoint == 'broadcast' %}active{% endif %}">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Broadcast</span>
+                </a>
+                <a href="{{ url_for('restart_bot') }}" class="nav-item {% if request.endpoint == 'restart_bot' %}active{% endif %}">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Restart Bot</span>
+                </a>
+                <a href="{{ url_for('notifications') }}" class="nav-item {% if request.endpoint == 'notifications' %}active{% endif %}" style="position:relative;">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    {% if unread_notifications > 0 %}
+                    <span class="notification-badge">{{ unread_notifications }}</span>
+                    {% endif %}
+                </a>
+                {% if current_user.is_owner() %}
+                <a href="{{ url_for('manage_admins') }}" class="nav-item {% if request.endpoint == 'manage_admins' %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admins</span>
+                </a>
+                {% endif %}
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="nav-item logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="top-bar-actions">
+                    <span class="admin-badge">
+                        <i class="fas fa-user-shield"></i>
+                        <span class="hide-mobile">Admin</span>
+                    </span>
+                </div>
+            </header>
+            <div class="content-area">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                                {{ message }}
+                                <button class="alert-close" onclick="this.parentElement.remove()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    <div class="auth-layout">
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+    <footer>
+        <div style="max-width: 800px; margin: 0 auto; text-align: left; line-height: 1.8;">
+            <p style="text-align: center; margin-bottom: 15px;"><strong>╭──────❪ 🤖 ʙᴏᴛ ᴅᴇᴛᴀɪʟs ❫─────〄</strong></p>
+            <p>│</p>
+            <p>│ 🤖 ɴᴀᴍᴇ : <a href="https://t.me/{{ bot_info.username if bot_info else 'ftmbotzx' }}" target="_blank">{{ bot_info.name if bot_info else 'ғᴛᴍ ʙᴏᴛ' }}</a></p>
+            <p>│ 👨‍💻 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ : <a href="https://t.me/ftmbotzx_support" target="_blank">ғᴛᴍʙᴏᴛᴢx sᴜᴘᴘᴏʀᴛ</a></p>
+            <p>│ 🛰️ ᴜᴘᴅᴀᴛᴇs : <a href="https://t.me/ftmbotzx" target="_blank">ғᴛᴍʙᴏᴛᴢx</a></p>
+            <p>│ 💾 ᴀssɪsᴛᴀɴᴛ ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href="https://t.me/astradev/" target="_blank">ᴀsᴛʀᴀᴅᴇᴠ</a></p>
+            <p>│ 🧠 ʟᴀɴɢᴜᴀɢᴇ : <code>ᴘʏᴛʜᴏɴ {{ python_ver }}</code></p>
+            <p>│ ⚙️ ʟɪʙʀᴀʀʏ : <code>ᴘʏʀᴏɢʀᴀᴍ {{ pyrogram_ver }}</code></p>
+            <p>│ 🗃️ ᴅᴀᴛᴀʙᴀsᴇ : <code>ᴍᴏɴɢᴏᴅʙ {{ mongodb_ver }}</code></p>
+            <p>│</p>
+            <p>│ 🌐 ᴏᴡɴᴇʀ : <a href="tg://user?id={{ owner_id }}">ᴄᴏɴᴛᴀᴄᴛ ᴏᴡɴᴇʀ</a></p>
+            <p>│ 💎 ᴘᴏᴡᴇʀᴇᴅ ʙʏ : <a href="https://t.me/ftmdeveloperz" target="_blank">ғᴛᴍ ᴅᴇᴠᴇʟᴏᴘᴇʀᴢ ⚡</a></p>
+            <p style="text-align: center; margin-top: 10px;">╰───────────────────⍟</p>
+            <p style="text-align: center; margin-top: 10px;">✨ ᴛʜᴀɴᴋ ʏᴏᴜ ғᴏʀ ᴜsɪɴɢ {{ bot_info.name if bot_info else 'ғᴛᴍ ʙᴏᴛ' }} ✨</p>
+            <p style="text-align: center; margin-top: 15px; font-size: 0.9em; color: var(--foreground-dimmest);">
+                &copy; 2025 ғᴛᴍ ʙᴏᴛᴢx. ᴀʟʟ ʀɪɢʜᴛs ʀᴇsᴇʀᴠᴇᴅ. | ᴠᴇʀsɪᴏɴ {{ bot_version }}
+            </p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+            }
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+
+            // Only run if both elements exist and are rendered
+            if (!sidebar || !toggle) return;
+            
+            // Ensure the click target exists
+            if (!event || !event.target) return;
+            
+            // Check if click is outside sidebar and toggle
+            try {
+                if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+                    sidebar.classList.remove('active');
+                }
+            } catch (e) {
+                // Silently handle any errors
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

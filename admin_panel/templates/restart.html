@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Restart Bot - Admin Panel{% endblock %}
+{% block page_title %}Restart Bot{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-sync-alt"></i> Restart Bot</h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Warning:</strong> This will restart the Telegram bot. Any ongoing operations will be interrupted.
+        </div>
+        
+        <p>Use this option to restart the bot if it becomes unresponsive or after making configuration changes.</p>
+        
+        <form method="POST" action="{{ url_for('restart_bot') }}" onsubmit="return confirm('Are you sure you want to restart the bot?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-sync-alt"></i> Restart Bot Now
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Admin Panel{% endblock %}
+{% block page_title %}Notification Center{% endblock %}
+
+{% block content %}
+<style>
+.filters-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--background-higher);
+    border-radius: 8px;
+}
+
+.filter-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    align-items: center;
+}
+
+.filter-group .form-input {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .filter-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .filter-group .form-input,
+    .filter-group .btn {
+        width: 100%;
+    }
+}
+</style>
+<div class="notifications-page">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-bell"></i> All Notifications</h2>
+        </div>
+        <div class="card-body">
+            <div class="filters-section">
+                <form method="GET" action="{{ url_for('notifications') }}" class="filter-form">
+                    <div class="filter-group">
+                        <input type="text" name="search" value="{{ search }}" placeholder="Search notifications..." class="form-input">
+                        <select name="filter" class="form-input">
+                            <option value="">All Types</option>
+                            <option value="info" {% if filter_type == 'info' %}selected{% endif %}>Info</option>
+                            <option value="success" {% if filter_type == 'success' %}selected{% endif %}>Success</option>
+                            <option value="warning" {% if filter_type == 'warning' %}selected{% endif %}>Warning</option>
+                            <option value="error" {% if filter_type == 'error' %}selected{% endif %}>Error</option>
+                            <option value="action" {% if filter_type == 'action' %}selected{% endif %}>Action</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                        {% if search or filter_type %}
+                        <a href="{{ url_for('notifications') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            {% if notifications %}
+            <div class="logs-list">
+                {% for notification in notifications %}
+                <div class="log-item {{ notification.get('log_type', 'info') }} clickable-notification" onclick="showNotificationDetail({{ loop.index0 }})">
+                    <div class="log-icon">
+                        {% if notification.get('log_type') == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif notification.get('log_type') == 'error' %}
+                            <i class="fas fa-exclamation-circle"></i>
+                        {% elif notification.get('log_type') == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% elif notification.get('log_type') == 'action' %}
+                            <i class="fas fa-cog"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                    </div>
+                    <div class="log-content">
+                        <p class="log-message">{{ notification.get('message', 'Unknown notification') }}</p>
+                        <div class="log-details">
+                            <span class="log-time">{{ notification.get('timestamp').strftime('%Y-%m-%d %H:%M:%S') if notification.get('timestamp') else '' }}</span>
+                            <span class="log-user">By: {{ notification.get('admin', 'System') }}</span>
+                            {% if notification.get('telegram_error') %}
+                            <span class="log-error" style="color: #ff6b6b;">Telegram Error: {{ notification['telegram_error'] }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-muted);"></i>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if page > 1 %}
+                <a href="{{ url_for('notifications', page=page-1) }}" class="btn btn-secondary">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+
+                <span class="page-info">{{ page }} / {{ total_pages }}</span>
+
+                {% if page < total_pages %}
+                <a href="{{ url_for('notifications', page=page+1) }}" class="btn btn-secondary">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>No notifications yet</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Notification Detail Modal -->
+<div id="notificationModal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3><i class="fas fa-info-circle"></i> Notification Details</h3>
+            <button class="modal-close" onclick="closeNotificationModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="notificationDetails">
+            <!-- Details will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<script>
+const notificationsData = {{ notifications | tojson | safe }};
+
+function showNotificationDetail(index) {
+    const notification = notificationsData[index];
+    const modal = document.getElementById('notificationModal');
+    const detailsDiv = document.getElementById('notificationDetails');
+
+    const typeIcons = {
+        'success': '<i class="fas fa-check-circle" style="color: var(--success);"></i>',
+        'error': '<i class="fas fa-exclamation-circle" style="color: var(--danger);"></i>',
+        'warning': '<i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i>',
+        'action': '<i class="fas fa-cog" style="color: var(--primary);"></i>',
+        'info': '<i class="fas fa-info-circle" style="color: var(--info);"></i>'
+    };
+
+    const logType = notification.log_type || 'info';
+    const icon = typeIcons[logType] || typeIcons['info'];
+
+    const timestamp = notification.timestamp ? new Date(notification.timestamp.$date || notification.timestamp).toLocaleString() : 'N/A';
+
+    let detailsHTML = `
+        <div class="notification-detail-content">
+            <div class="detail-row">
+                <div class="detail-label">${icon} Type</div>
+                <div class="detail-value"><span class="badge badge-${logType}">${logType.toUpperCase()}</span></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label"><i class="fas fa-clock"></i> Timestamp</div>
+                <div class="detail-value">${timestamp}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label"><i class="fas fa-user"></i> Admin</div>
+                <div class="detail-value">${notification.admin || 'System'}</div>
+            </div>
+            <div class="detail-row full-width">
+                <div class="detail-label"><i class="fas fa-comment"></i> Message</div>
+                <div class="detail-value message-content">${notification.message || 'No message'}</div>
+            </div>
+    `;
+
+    if (notification.telegram_error) {
+        detailsHTML += `
+            <div class="detail-row full-width">
+                <div class="detail-label"><i class="fas fa-exclamation-triangle"></i> Telegram Error</div>
+                <div class="detail-value error-content">${notification.telegram_error}</div>
+            </div>
+        `;
+    }
+
+    if (notification.read !== undefined) {
+        detailsHTML += `
+            <div class="detail-row">
+                <div class="detail-label"><i class="fas fa-eye"></i> Status</div>
+                <div class="detail-value">${notification.read ? '<span class="badge badge-success">Read</span>' : '<span class="badge badge-warning">Unread</span>'}</div>
+            </div>
+        `;
+    }
+
+    detailsHTML += '</div>';
+
+    detailsDiv.innerHTML = detailsHTML;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNotificationModal() {
+    const modal = document.getElementById('notificationModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function closeModal(event) {
+    if (event.target.id === 'notificationModal') {
+        closeNotificationModal();
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeNotificationModal();
+    }
+});
+</script>
+
+<style>
+.clickable-notification {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.clickable-notification:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s;
+}
+
+.modal-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-tertiary);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.notification-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+}
+
+.detail-row.full-width {
+    grid-template-columns: 1fr;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-value {
+    color: var(--text-primary);
+}
+
+.message-content, .error-content {
+    padding: 0.75rem;
+    background: var(--bg-card);
+    border-radius: 4px;
+    border-left: 3px solid var(--primary);
+    word-wrap: break-word;
+}
+
+.error-content {
+    border-left-color: var(--danger);
+    color: var(--danger);
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.badge-success {
+    background: var(--success);
+    color: white;
+}
+
+.badge-error {
+    background: var(--danger);
+    color: white;
+}
+
+.badge-warning {
+    background: var(--warning);
+    color: white;
+}
+
+.badge-action {
+    background: var(--primary);
+    color: white;
+}
+
+.badge-info {
+    background: var(--info);
+    color: white;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+}
+</style>
+{% endblock %}

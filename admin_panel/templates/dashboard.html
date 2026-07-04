@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Admin Panel{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon users">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ users_count }}</h3>
+                <p>Total Users</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bots">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ bots_count }}</h3>
+                <p>User Bots</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon channels">
+                <i class="fas fa-broadcast-tower"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ channels_count }}</h3>
+                <p>Channels</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon banned">
+                <i class="fas fa-ban"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ banned_count }}</h3>
+                <p>Banned Users</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card subscription-overview">
+            <div class="card-header">
+                <h2><i class="fas fa-crown"></i> Subscription Overview</h2>
+            </div>
+            <div class="card-body">
+                <div class="subscription-bars">
+                    <div class="sub-item">
+                        <div class="sub-label">
+                            <span class="plan-badge free">Free</span>
+                            <span class="count">{{ subscription_stats.free }}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress free" style="width: {{ (subscription_stats.free / (users_count or 1) * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                    <div class="sub-item">
+                        <div class="sub-label">
+                            <span class="plan-badge plus">Plus</span>
+                            <span class="count">{{ subscription_stats.plus }}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress plus" style="width: {{ (subscription_stats.plus / (users_count or 1) * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                    <div class="sub-item">
+                        <div class="sub-label">
+                            <span class="plan-badge pro">Pro</span>
+                            <span class="count">{{ subscription_stats.pro }}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress pro" style="width: {{ (subscription_stats.pro / (users_count or 1) * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                    <div class="sub-item">
+                        <div class="sub-label">
+                            <span class="plan-badge infinity">Infinity</span>
+                            <span class="count">{{ subscription_stats.infinity }}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress infinity" style="width: {{ (subscription_stats.infinity / (users_count or 1) * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="subscription-summary">
+                    <div class="summary-item">
+                        <i class="fas fa-infinity"></i>
+                        <span>{{ lifetime_count }} Lifetime</span>
+                    </div>
+                    <div class="summary-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ expired_count }} Expired</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card quick-actions">
+            <div class="card-header">
+                <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+            </div>
+            <div class="card-body">
+                <div class="action-buttons">
+                    <a href="{{ url_for('users') }}" class="action-btn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('subscriptions') }}" class="action-btn">
+                        <i class="fas fa-crown"></i>
+                        <span>Update Plans</span>
+                    </a>
+                    <a href="{{ url_for('bans') }}" class="action-btn">
+                        <i class="fas fa-user-slash"></i>
+                        <span>Ban Management</span>
+                    </a>
+                    <a href="{{ url_for('ftm_bucks') }}" class="action-btn">
+                        <i class="fas fa-coins"></i>
+                        <span>FTM Bucks</span>
+                    </a>
+                    <a href="{{ url_for('broadcast') }}" class="action-btn">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Broadcast</span>
+                    </a>
+                    <a href="{{ url_for('restart_bot') }}" class="action-btn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Restart Bot</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if recent_logs %}
+    <div class="card recent-logs">
+        <div class="card-header">
+            <h2><i class="fas fa-history"></i> Recent Activity</h2>
+            <a href="{{ url_for('activity_logs') }}" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+            <div class="logs-list compact">
+                {% for log in recent_logs %}
+                <div class="log-item {{ log.get('log_type', 'info') }} compact">
+                    <div class="log-icon">
+                        {% if log.get('log_type') == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif log.get('log_type') == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% elif log.get('log_type') == 'error' %}
+                            <i class="fas fa-times-circle"></i>
+                        {% elif log.get('log_type') == 'action' %}
+                            <i class="fas fa-cog"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                    </div>
+                    <div class="log-content">
+                        <p class="log-message">{{ log.get('message', 'Unknown action')[:60] }}{% if log.get('message', '')|length > 60 %}...{% endif %}</p>
+                        <span class="log-time">{{ log.get('timestamp').strftime('%H:%M:%S') if log.get('timestamp') else '' }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card recent-users">
+        <div class="card-header">
+            <h2><i class="fas fa-user-clock"></i> Recent Users</h2>
+            <a href="{{ url_for('users') }}" class="view-all">View All <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th class="hide-mobile">Name</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th class="hide-mobile">Joined</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td><code>{{ user['id'] }}</code></td>
+                            <td class="hide-mobile">{{ user.get('name', 'Unknown') }}</td>
+                            <td>
+                                <span class="plan-badge {{ user.get('subscription', {}).get('plan', 'free') }}">
+                                    {{ user.get('subscription', {}).get('plan', 'free')|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.get('ban_status', {}).get('is_banned') %}
+                                    <span class="status-badge banned">Banned</span>
+                                {% else %}
+                                    <span class="status-badge active">Active</span>
+                                {% endif %}
+                            </td>
+                            <td class="hide-mobile">{{ user.get('joined_at').strftime('%Y-%m-%d') if user.get('joined_at') else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Admin Panel{% endblock %}
+{% block page_title %}Bot Settings{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="settings-grid">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-info-circle"></i> Bot Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Bot Version</label>
+                        <span class="version-badge">{{ config.bot_version }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Build Status</label>
+                        <span class="status-badge active">{{ config.build_status }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Surveillance Mode</label>
+                        <span class="status-badge {{ 'active' if config.surveillance_mode else 'inactive' }}">
+                            {{ 'Enabled' if config.surveillance_mode else 'Disabled' }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <label>Default Duration</label>
+                        <span>{{ config.plan_duration }} days</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-link"></i> Important Links</h2>
+            </div>
+            <div class="card-body">
+                <div class="link-list">
+                    <a href="{{ config.support_group }}" target="_blank" class="link-item">
+                        <i class="fas fa-headset"></i>
+                        <span>Support Group</span>
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    <a href="{{ config.update_channel }}" target="_blank" class="link-item">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Update Channel</span>
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-tags"></i> Subscription Pricing</h2>
+            </div>
+            <div class="card-body">
+                <div class="pricing-grid">
+                    <div class="price-card plus">
+                        <div class="price-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h3>Plus</h3>
+                        <div class="price">Rs. {{ config.plus_price }}</div>
+                        <span class="duration">per month</span>
+                    </div>
+                    <div class="price-card pro">
+                        <div class="price-icon">
+                            <i class="fas fa-gem"></i>
+                        </div>
+                        <h3>Pro</h3>
+                        <div class="price">Rs. {{ config.pro_price }}</div>
+                        <span class="duration">per month</span>
+                    </div>
+                    <div class="price-card infinity">
+                        <div class="price-icon">
+                            <i class="fas fa-infinity"></i>
+                        </div>
+                        <h3>Infinity</h3>
+                        <div class="price">Rs. {{ config.infinity_price }}</div>
+                        <span class="duration">per month</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-shield-alt"></i> Admin Credentials</h2>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <p><strong>To change admin credentials:</strong></p>
+                        <p>Set these environment variables:</p>
+                        <ul>
+                            <li><code>ADMIN_USERNAME</code> - Admin username</li>
+                            <li><code>ADMIN_PASSWORD</code> - Admin password</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

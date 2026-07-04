@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Referrals - Admin Panel{% endblock %}
+{% block page_title %}Referral Leaderboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-share-alt"></i> Top Referrers</h2>
+    </div>
+    <div class="card-body">
+        {% if referrers %}
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>User ID</th>
+                        <th class="hide-mobile">Name</th>
+                        <th>Referrals</th>
+                        <th>FTM Bucks</th>
+                        <th class="hide-mobile">Referral Code</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in referrers %}
+                    <tr>
+                        <td class="rank">{{ (page - 1) * 20 + loop.index }}</td>
+                        <td><code>{{ user['id'] }}</code></td>
+                        <td class="hide-mobile">{{ user.get('name', 'Unknown') }}</td>
+                        <td><span class="referral-count">{{ user.get('referral', {}).get('total_referrals', 0) }}</span></td>
+                        <td><span class="ftm-bucks">{{ user.get('referral', {}).get('ftm_bucks', 0) }}</span></td>
+                        <td class="hide-mobile"><code class="small-code">{{ user.get('referral', {}).get('code', 'N/A') }}</code></td>
+                        <td>
+                            <a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="{{ url_for('referrals', page=page-1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="page-info">{{ page }} / {{ total_pages }}</span>
+            
+            {% if page < total_pages %}
+            <a href="{{ url_for('referrals', page=page+1) }}" class="btn btn-secondary">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-share-alt"></i>
+            <p>No referrals yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

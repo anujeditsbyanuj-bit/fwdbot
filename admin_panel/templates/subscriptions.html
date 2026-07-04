@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Subscriptions - Admin Panel{% endblock %}
+{% block page_title %}Subscription Management{% endblock %}
+
+{% block content %}
+<div class="subscriptions-page">
+    <div class="card update-subscription">
+        <div class="card-header">
+            <h2><i class="fas fa-crown"></i> Update User Subscription</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="subscription-form">
+                {{ form.hidden_tag() }}
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>User ID</label>
+                        {{ form.user_id(class="form-input", placeholder="Telegram User ID") }}
+                    </div>
+                    <div class="form-group">
+                        <label>Plan</label>
+                        {{ form.plan(class="form-input") }}
+                    </div>
+                    <div class="form-group">
+                        <label>Duration Value</label>
+                        {{ form.duration_value(class="form-input", placeholder="30") }}
+                    </div>
+                    <div class="form-group">
+                        <label>Duration Unit</label>
+                        {{ form.duration_unit(class="form-input") }}
+                    </div>
+                    <div class="form-group">
+                        <label>Lifetime?</label>
+                        {{ form.lifetime(class="form-input") }}
+                    </div>
+                </div>
+                <div class="duration-preview">
+                    <i class="fas fa-clock"></i>
+                    <span id="durationPreview">Duration: 30 days</span>
+                </div>
+                <button type="submit" name="update_plan" class="btn btn-primary btn-full">
+                    <i class="fas fa-save"></i> Update Plan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card revoke-subscription">
+        <div class="card-header">
+            <h2><i class="fas fa-times-circle"></i> Revoke Subscription</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('revoke_plan') }}" class="revoke-form">
+                {{ revoke_form.hidden_tag() }}
+                <div class="form-row">
+                    <div class="form-group flex-grow">
+                        <input type="number" name="user_id" class="form-input" placeholder="Enter User ID to revoke plan">
+                    </div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Revoke Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-users"></i> Subscribed Users</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th class="hide-mobile">Name</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th class="hide-mobile">Duration</th>
+                            <th class="hide-mobile">Expires</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in subscribed_users %}
+                        <tr>
+                            <td><code>{{ user['id'] }}</code></td>
+                            <td class="hide-mobile">{{ user.get('name', 'Unknown') }}</td>
+                            <td>
+                                <span class="plan-badge {{ user.get('subscription', {}).get('plan', 'free') }}">
+                                    {{ user.get('subscription', {}).get('plan', 'free')|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge {{ user.get('subscription', {}).get('status', 'active') }}">
+                                    {{ user.get('subscription', {}).get('status', 'active')|capitalize }}
+                                </span>
+                            </td>
+                            <td class="hide-mobile">{{ user.get('subscription', {}).get('duration_info') or 'N/A' }}</td>
+                            <td class="hide-mobile">{{ user.get('subscription', {}).get('expires_at').strftime('%Y-%m-%d') if user.get('subscription', {}).get('expires_at') else 'Never' }}</td>
+                            <td>
+                                <a href="{{ url_for('user_detail', user_id=user['id']) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const durationValue = document.getElementById('duration_value');
+    const durationUnit = document.getElementById('duration_unit');
+    const lifetime = document.getElementById('lifetime');
+    const preview = document.getElementById('durationPreview');
+    
+    function updatePreview() {
+        if (lifetime && lifetime.value === 'yes') {
+            preview.textContent = 'Duration: LIFETIME (Never expires)';
+        } else if (durationValue && durationUnit) {
+            const val = durationValue.value || 30;
+            const unit = durationUnit.value || 'days';
+            preview.textContent = `Duration: ${val} ${unit}`;
+        }
+    }
+    
+    if (durationValue) durationValue.addEventListener('input', updatePreview);
+    if (durationUnit) durationUnit.addEventListener('change', updatePreview);
+    if (lifetime) lifetime.addEventListener('change', updatePreview);
+    
+    updatePreview();
+});
+</script>
+{% endblock %}
