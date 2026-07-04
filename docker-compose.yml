@@ -1,0 +1,9 @@
+
+
+services:
+  fwdbot:
+    build: .
+    container_name: fwdbot
+    restart: always
+    env_file:
+      - .env

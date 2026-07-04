@@ -1,0 +1,17 @@
+Pyrogram==2.0.93
+TgCrypto
+aiohttp
+cryptg
+dnspython
+flask
+flask-login
+flask-wtf
+motor
+opencv-python-headless
+psutil
+pymongo
+python-decouple
+pytz
+requests
+speedtest-cli
+werkzeug
